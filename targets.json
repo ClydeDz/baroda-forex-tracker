@@ -1,0 +1,17 @@
+[
+    {
+        "name": "Excellent Rate",
+        "target": 55.00,
+        "priority": 1
+    },
+    {
+        "name": "Good Rate",
+        "target": 54.85,
+        "priority": 2
+    },
+    {
+        "name": "Acceptable Rate",
+        "target": 54.50,
+        "priority": 3
+    }
+]

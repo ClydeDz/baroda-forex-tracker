@@ -2,12 +2,15 @@
     "name": "INR Exchange Rate Tracker",
     "short_name": "INR Tracker",
     "description": "Track Baroda Bank NZ INR selling exchange rates",
-    "start_url": "/",
+    "start_url": "/baroda-forex-tracker/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#f26522",
     "orientation": "portrait-primary",
-    "scope": "/",
+    "scope": "/baroda-forex-tracker/",
+    "categories": [
+        "finance"
+    ],
     "icons": [
         {
             "src": "icon-192.png",
