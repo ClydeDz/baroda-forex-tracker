@@ -8,7 +8,7 @@ on:
 
 permissions:
   contents: write
-  
+
 jobs:
   scrape:
     runs-on: ubuntu-latest
@@ -53,8 +53,8 @@ jobs:
               console.log('Waiting for INR element...');
               await page.waitForSelector('.sbINRli', { timeout: 15000 });
 
-              // Wait a bit for any dynamic content to load
-              await page.waitForTimeout(2000);
+              // Wait a bit for any dynamic content to load using setTimeout
+              await new Promise(resolve => setTimeout(resolve, 2000));
 
               // Extract the selling value from the INR element
               const inrValue = await page.$eval('.sbINRli .b-buy-sell-div p:last-child', (el) => {
