@@ -38,26 +38,42 @@ self.addEventListener("activate", (event) => {
 
 // Fetch event
 self.addEventListener("fetch", (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Only handle requests within our scope
+  if (!url.pathname.startsWith("/baroda-forex-tracker/")) {
+    return;
+  }
+
   // For JSON data, try network first, fallback to cache
-  if (event.request.url.includes(".json")) {
+  if (request.url.includes(".json")) {
     event.respondWith(
-      fetch(event.request)
+      fetch(request)
         .then((response) => {
           const clonedResponse = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, clonedResponse);
+            cache.put(request, clonedResponse);
           });
           return response;
         })
         .catch(() => {
-          return caches.match(event.request);
+          return caches.match(request);
         }),
     );
   } else {
     // For other assets, cache first, fallback to network
     event.respondWith(
-      caches.match(event.request).then((response) => {
-        return response || fetch(event.request);
+      caches.match(request).then((response) => {
+        return (
+          response ||
+          fetch(request).catch(() => {
+            // If offline and no cache, return index.html
+            if (request.mode === "navigate") {
+              return caches.match("/baroda-forex-tracker/index.html");
+            }
+          })
+        );
       }),
     );
   }
@@ -75,8 +91,8 @@ self.addEventListener("push", (event) => {
   const data = event.data ? event.data.json() : {};
   const options = {
     body: data.body || "INR rate alert",
-    icon: "/icon-192.png",
-    badge: "/icon-192.png",
+    icon: "/baroda-forex-tracker/icon-192.png",
+    badge: "/baroda-forex-tracker/icon-192.png",
     tag: "inr-alert",
     requireInteraction: true,
     actions: [
@@ -113,12 +129,15 @@ self.addEventListener("notificationclick", (event) => {
       .then((clientList) => {
         for (let i = 0; i < clientList.length; i++) {
           const client = clientList[i];
-          if (client.url === "/" && "focus" in client) {
+          if (
+            client.url.includes("/baroda-forex-tracker/") &&
+            "focus" in client
+          ) {
             return client.focus();
           }
         }
         if (clients.openWindow) {
-          return clients.openWindow("/");
+          return clients.openWindow("/baroda-forex-tracker/");
         }
       }),
   );
@@ -127,8 +146,8 @@ self.addEventListener("notificationclick", (event) => {
 // Check INR rate function
 async function checkINRRate() {
   try {
-    const ratesResponse = await fetch("/inr-rates.json");
-    const targetsResponse = await fetch("/targets.json");
+    const ratesResponse = await fetch("/baroda-forex-tracker/inr-rates.json");
+    const targetsResponse = await fetch("/baroda-forex-tracker/targets.json");
 
     const ratesData = await ratesResponse.json();
     const targetsData = await targetsResponse.json();
@@ -182,8 +201,8 @@ async function checkINRRate() {
         // Send notification for this target
         await self.registration.showNotification(`${matchedTarget.name}! 🎉`, {
           body: `The INR selling rate is ${currentRate.toFixed(2)} - Meets your "${matchedTarget.name}" target of ${matchedTarget.target.toFixed(2)}!`,
-          icon: "/icon-192.png",
-          badge: "/icon-192.png",
+          icon: "/baroda-forex-tracker/icon-192.png",
+          badge: "/baroda-forex-tracker/icon-192.png",
           tag: "inr-alert",
           requireInteraction: true,
           actions: [
