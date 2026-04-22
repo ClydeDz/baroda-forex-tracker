@@ -1,0 +1,97 @@
+name: Currency Scraper
+
+on:
+  schedule:
+    # 10 AM Auckland time = 22:00 UTC (during NZ Standard Time)
+    # Note: During NZ Daylight Saving Time (late Sept - early April), it would be 21:00 UTC
+    # This cron runs at 22:00 UTC which covers most of the year
+    - cron: '0 22 * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm install puppeteer
+      
+      - name: Scrape INR Selling Value
+        run: |
+          cat > scraper.js << 'EOF'
+          const puppeteer = require('puppeteer');
+          const fs = require('fs');
+          const path = require('path');
+
+          (async () => {
+            try {
+              const browser = await puppeteer.launch({
+                headless: 'new',
+                args: ['--no-sandbox', '--disable-setuid-sandbox']
+              });
+              
+              const page = await browser.newPage();
+              console.log('Navigating to website...');
+              await page.goto('https://www.barodanzltd.co.nz/indicative-forex-exchange', {
+                waitUntil: 'networkidle2',
+                timeout: 30000
+              });
+
+              console.log('Waiting for INR element...');
+              await page.waitForSelector('.sbINRli');
+
+              // Extract the selling value from the INR element
+              const inrValue = await page.$eval('.sbINRli .b-buy-sell-div p:last-child', (el) => {
+                const text = el.textContent;
+                return parseFloat(text.trim());
+              });
+
+              console.log(`Extracted INR Selling Value: ${inrValue}`);
+              
+              await browser.close();
+
+              // Format current date as DD-MM-YYYY
+              const today = new Date();
+              const formattedDate = String(today.getDate()).padStart(2, '0') + '-' + 
+                                    String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                                    today.getFullYear();
+
+              // Read existing JSON file or create new array
+              const filePath = path.join(process.cwd(), 'inr-rates.json');
+              let data = [];
+              
+              if (fs.existsSync(filePath)) {
+                const fileContent = fs.readFileSync(filePath, 'utf8');
+                data = JSON.parse(fileContent);
+              }
+
+              // Add new entry
+              const newEntry = { value: inrValue, date: formattedDate };
+              data.push(newEntry);
+
+              // Write updated data back to file
+              fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+              console.log(`Updated inr-rates.json with value: ${inrValue} for date: ${formattedDate}`);
+
+            } catch (error) {
+              console.error('Error during scraping:', error);
+              process.exit(1);
+            }
+          })();
+          EOF
+          node scraper.js
+      
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "github-actions[bot]"
+          git add inr-rates.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update INR selling rate - $(date +%d-%m-%Y)" && git push)
