@@ -1,13 +1,14 @@
-name: Currency Scraper
+name: Currency Scraper 
 
 on:
   schedule:
-    # 10 AM Auckland time = 22:00 UTC (during NZ Standard Time)
-    # Note: During NZ Daylight Saving Time (late Sept - early April), it would be 21:00 UTC
-    # This cron runs at 22:00 UTC which covers most of the year
-    - cron: '0 22 * * *'
+    # 9 AM Auckland time = 21:00 UTC (during NZ Standard Time)
+    - cron: '0 21 * * *'
   workflow_dispatch: # Allow manual triggering
 
+permissions:
+  contents: write
+  
 jobs:
   scrape:
     runs-on: ubuntu-latest
@@ -32,21 +33,28 @@ jobs:
           const path = require('path');
 
           (async () => {
+            let browser;
             try {
-              const browser = await puppeteer.launch({
+              browser = await puppeteer.launch({
                 headless: 'new',
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
+                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
               });
               
               const page = await browser.newPage();
+              page.setDefaultTimeout(60000);
+              page.setDefaultNavigationTimeout(60000);
+              
               console.log('Navigating to website...');
               await page.goto('https://www.barodanzltd.co.nz/indicative-forex-exchange', {
-                waitUntil: 'networkidle2',
-                timeout: 30000
+                waitUntil: 'domcontentloaded',
+                timeout: 60000
               });
 
               console.log('Waiting for INR element...');
-              await page.waitForSelector('.sbINRli');
+              await page.waitForSelector('.sbINRli', { timeout: 15000 });
+
+              // Wait a bit for any dynamic content to load
+              await page.waitForTimeout(2000);
 
               // Extract the selling value from the INR element
               const inrValue = await page.$eval('.sbINRli .b-buy-sell-div p:last-child', (el) => {
@@ -82,8 +90,12 @@ jobs:
               console.log(`Updated inr-rates.json with value: ${inrValue} for date: ${formattedDate}`);
 
             } catch (error) {
-              console.error('Error during scraping:', error);
+              console.error('Error during scraping:', error.message);
               process.exit(1);
+            } finally {
+              if (browser) {
+                await browser.close();
+              }
             }
           })();
           EOF
