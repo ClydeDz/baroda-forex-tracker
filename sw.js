@@ -202,7 +202,7 @@ async function checkINRRate() {
         await self.registration.showNotification(`${matchedTarget.name}! 🎉`, {
           body: `The INR selling rate is ${currentRate.toFixed(2)}. Meets your "${matchedTarget.name.toLowerCase()}" target of ${matchedTarget.target.toFixed(2)}!`,
           icon: "/baroda-forex-tracker/icon-192.png",
-          badge: "/baroda-forex-tracker/icon-192.png",
+          badge: "/baroda-forex-tracker/badge-icon.png",
           tag: "inr-alert",
           requireInteraction: true,
           actions: [
