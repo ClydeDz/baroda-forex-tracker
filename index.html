@@ -67,6 +67,7 @@
 
       .table-container {
         overflow-x: auto;
+        margin-bottom: 40px;
       }
 
       table {
@@ -203,7 +204,8 @@
         background: #f0f0f0;
         padding: 20px;
         border-radius: 8px;
-        margin-bottom: 30px;
+        margin-top: 40px;
+        border-top: 2px solid #f26522;
       }
 
       .notification-settings h3 {
@@ -317,6 +319,24 @@
       <div id="loading" class="loading">Loading data...</div>
 
       <div id="content" style="display: none">
+        <div class="stats" id="stats-container"></div>
+
+        <div class="chart-container">
+          <canvas id="rateChart"></canvas>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Selling Rate (INR)</th>
+              </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
+
         <div class="notification-settings">
           <h3>📢 Notification Targets</h3>
           <div class="targets-list" id="targets-container"></div>
@@ -335,24 +355,6 @@
             id="notificationStatus"
             style="margin-top: 10px; color: #666; font-size: 14px"
           ></p>
-        </div>
-
-        <div class="stats" id="stats-container"></div>
-
-        <div class="chart-container">
-          <canvas id="rateChart"></canvas>
-        </div>
-
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Selling Rate (INR)</th>
-              </tr>
-            </thead>
-            <tbody id="table-body"></tbody>
-          </table>
         </div>
       </div>
     </div>
@@ -471,8 +473,8 @@
         if (swRegistration) {
           swRegistration.showNotification(`${topTarget.name} Test 🧪`, {
             body: `This is a test notification. Your highest priority target is ${topTarget.target.toFixed(2)}`,
-            icon: "/icon-192.png",
-            badge: "/icon-192.png",
+            icon: "/baroda-forex-tracker/icon-192.png",
+            badge: "/baroda-forex-tracker/icon-192.png",
             tag: "inr-alert-test",
             requireInteraction: true,
           });
@@ -543,7 +545,7 @@
 
       async function loadTargets() {
         try {
-          const response = await fetch("targets.json");
+          const response = await fetch("/baroda-forex-tracker/targets.json");
           if (!response.ok) {
             throw new Error("Failed to load targets");
           }
@@ -579,7 +581,7 @@
           // Load targets first
           await loadTargets();
 
-          const response = await fetch("inr-rates.json");
+          const response = await fetch("/baroda-forex-tracker/inr-rates.json");
           if (!response.ok) {
             throw new Error("Failed to load data");
           }
