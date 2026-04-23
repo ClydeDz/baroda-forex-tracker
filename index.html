@@ -422,6 +422,19 @@
           deferredPrompt.userChoice.then((choiceResult) => {
             if (choiceResult.outcome === "accepted") {
               console.log("User accepted the install prompt");
+              // Request notification permission after user accepts install
+              setTimeout(() => {
+                if (Notification.permission === "default") {
+                  Notification.requestPermission().then((permission) => {
+                    if (permission === "granted") {
+                      saveNotificationPreferences(true);
+                      if (swRegistration) {
+                        requestBackgroundSync();
+                      }
+                    }
+                  });
+                }
+              }, 500);
             }
             deferredPrompt = null;
           });
@@ -741,7 +754,26 @@
       }
 
       // Load data when page loads
-      document.addEventListener("DOMContentLoaded", loadAndDisplayData);
+      document.addEventListener("DOMContentLoaded", () => {
+        loadAndDisplayData();
+
+        // Auto-request notification permission on first load if app is standalone
+        if (
+          window.navigator.standalone === true &&
+          Notification.permission === "default"
+        ) {
+          setTimeout(() => {
+            Notification.requestPermission().then((permission) => {
+              if (permission === "granted") {
+                saveNotificationPreferences(true);
+                if (swRegistration) {
+                  requestBackgroundSync();
+                }
+              }
+            });
+          }, 500);
+        }
+      });
     </script>
   </body>
 </html>
