@@ -365,6 +365,36 @@
       let swRegistration = null;
       let targetsData = [];
 
+      // Detect if running in PWA standalone mode
+      function isStandaloneMode() {
+        return (
+          window.matchMedia("(display-mode: standalone)").matches ||
+          window.matchMedia("(display-mode: fullscreen)").matches ||
+          window.matchMedia("(display-mode: minimal-ui)").matches ||
+          (navigator.standalone === true)
+        );
+      }
+
+      // Auto-request notification permissions when app is in standalone mode
+      function promptNotificationsIfNeeded() {
+        if (!("Notification" in window)) {
+          console.log("Notifications not supported");
+          return;
+        }
+
+        // Only auto-prompt if in standalone mode and permission is default
+        if (isStandaloneMode() && Notification.permission === "default") {
+          console.log("Standalone mode detected, auto-requesting notification permission...");
+          Notification.requestPermission().then((permission) => {
+            console.log("Notification permission result:", permission);
+            if (permission === "granted") {
+              saveNotificationPreferences(true);
+              updateNotificationStatus();
+            }
+          });
+        }
+      }
+
       // Register service worker with correct scope
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker
@@ -393,19 +423,6 @@
         console.log("PWA installed");
         dismissInstallBanner();
         deferredPrompt = null;
-        // Auto-request notification permission after install
-        setTimeout(() => {
-          if (Notification.permission === "default") {
-            Notification.requestPermission().then((permission) => {
-              if (permission === "granted") {
-                saveNotificationPreferences(true);
-                if (swRegistration) {
-                  requestBackgroundSync();
-                }
-              }
-            });
-          }
-        }, 1000);
       });
 
       function showInstallBanner() {
@@ -757,27 +774,10 @@
       document.addEventListener("DOMContentLoaded", () => {
         loadAndDisplayData();
 
-        // Auto-request notification permission
-        // Don't rely on navigator.standalone as it's unreliable on Android
+        // Auto-request notification permission if in standalone mode
         setTimeout(() => {
-          // Only request if permission hasn't been asked yet
-          if (Notification.permission === "default") {
-            console.log("Auto-requesting notification permission...");
-            Notification.requestPermission().then((permission) => {
-              console.log("Notification permission result:", permission);
-              if (permission === "granted") {
-                saveNotificationPreferences(true);
-                updateNotificationStatus();
-                if (swRegistration) {
-                  requestBackgroundSync();
-                }
-                showSuccess("Notifications enabled! You will receive alerts when the rate meets your targets.");
-              }
-            });
-          } else {
-            console.log("Notification permission already:", Notification.permission);
-          }
-        }, 1500);
+          promptNotificationsIfNeeded();
+        }, 500);
       });
     </script>
   </body>
