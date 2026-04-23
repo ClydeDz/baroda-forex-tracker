@@ -393,6 +393,19 @@
         console.log("PWA installed");
         dismissInstallBanner();
         deferredPrompt = null;
+        // Auto-request notification permission after install
+        setTimeout(() => {
+          if (Notification.permission === "default") {
+            Notification.requestPermission().then((permission) => {
+              if (permission === "granted") {
+                saveNotificationPreferences(true);
+                if (swRegistration) {
+                  requestBackgroundSync();
+                }
+              }
+            });
+          }
+        }, 1000);
       });
 
       function showInstallBanner() {

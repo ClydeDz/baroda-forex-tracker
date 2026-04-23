@@ -92,7 +92,7 @@ self.addEventListener("push", (event) => {
   const options = {
     body: data.body || "INR rate alert",
     icon: "/baroda-forex-tracker/icon-192.png",
-    badge: "/baroda-forex-tracker/icon-192.png",
+    badge: "/baroda-forex-tracker/badge-icon.png",
     tag: "inr-alert",
     requireInteraction: true,
     actions: [
