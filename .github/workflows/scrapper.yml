@@ -1,9 +1,9 @@
-name: Currency Scraper 
+name: Currency Scraper
 
 on:
   schedule:
     # 9 AM Auckland time = 21:00 UTC (during NZ Standard Time)
-    - cron: '0 21 * * *'
+    - cron: "0 21 * * *"
   workflow_dispatch: # Allow manual triggering
 
 permissions:
@@ -12,19 +12,19 @@ permissions:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
-          
+          node-version: "18"
+
       - name: Install dependencies
         run: npm install puppeteer
-      
+
       - name: Scrape INR Selling Value
         run: |
           cat > scraper.js << 'EOF'
@@ -66,11 +66,12 @@ jobs:
               
               await browser.close();
 
-              // Format current date as DD-MM-YYYY
+              // Format current date as DD-MM-YYYY in New Zealand timezone
               const today = new Date();
-              const formattedDate = String(today.getDate()).padStart(2, '0') + '-' + 
-                                    String(today.getMonth() + 1).padStart(2, '0') + '-' + 
-                                    today.getFullYear();
+              const nzDate = new Date(today.toLocaleString('en-US', { timeZone: 'Pacific/Auckland' }));
+              const formattedDate = String(nzDate.getDate()).padStart(2, '0') + '-' + 
+                                    String(nzDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                                    nzDate.getFullYear();
 
               // Read existing JSON file or create new array
               const filePath = path.join(process.cwd(), 'inr-rates.json');
@@ -100,7 +101,7 @@ jobs:
           })();
           EOF
           node scraper.js
-      
+
       - name: Commit and push changes
         run: |
           git config --local user.email "action@github.com"
