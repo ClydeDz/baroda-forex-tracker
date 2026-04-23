@@ -1,0 +1,12 @@
+{
+  "name": "baroda-forex-tracker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "sw.js",
+  "scripts": {
+    "start": "bash ./run.sh"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
