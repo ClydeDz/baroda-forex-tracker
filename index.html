@@ -757,22 +757,27 @@
       document.addEventListener("DOMContentLoaded", () => {
         loadAndDisplayData();
 
-        // Auto-request notification permission on first load if app is standalone
-        if (
-          window.navigator.standalone === true &&
-          Notification.permission === "default"
-        ) {
-          setTimeout(() => {
+        // Auto-request notification permission
+        // Don't rely on navigator.standalone as it's unreliable on Android
+        setTimeout(() => {
+          // Only request if permission hasn't been asked yet
+          if (Notification.permission === "default") {
+            console.log("Auto-requesting notification permission...");
             Notification.requestPermission().then((permission) => {
+              console.log("Notification permission result:", permission);
               if (permission === "granted") {
                 saveNotificationPreferences(true);
+                updateNotificationStatus();
                 if (swRegistration) {
                   requestBackgroundSync();
                 }
+                showSuccess("Notifications enabled! You will receive alerts when the rate meets your targets.");
               }
             });
-          }, 500);
-        }
+          } else {
+            console.log("Notification permission already:", Notification.permission);
+          }
+        }, 1500);
       });
     </script>
   </body>
