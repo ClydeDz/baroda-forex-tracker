@@ -640,7 +640,7 @@
             return true;
           });
 
-          // Sort by date (oldest first)
+          // Sort by date (oldest first for chart)
           filteredData.sort((a, b) => {
             const dateA = new Date(a.date.split("-").reverse().join("-"));
             const dateB = new Date(b.date.split("-").reverse().join("-"));
@@ -758,7 +758,9 @@
 
       function displayTable(data) {
         const tableBody = document.getElementById("table-body");
-        tableBody.innerHTML = data
+        // Reverse data to show newest first in table
+        const reversedData = [...data].reverse();
+        tableBody.innerHTML = reversedData
           .map(
             (entry) => `
                 <tr>
