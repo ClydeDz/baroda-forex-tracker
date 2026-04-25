@@ -371,25 +371,37 @@
           window.matchMedia("(display-mode: standalone)").matches ||
           window.matchMedia("(display-mode: fullscreen)").matches ||
           window.matchMedia("(display-mode: minimal-ui)").matches ||
-          (navigator.standalone === true)
+          navigator.standalone === true
         );
       }
 
-      // Auto-request notification permissions when app is in standalone mode
+      // Auto-request notification permissions on first visit
       function promptNotificationsIfNeeded() {
         if (!("Notification" in window)) {
           console.log("Notifications not supported");
           return;
         }
 
-        // Only auto-prompt if in standalone mode and permission is default
-        if (isStandaloneMode() && Notification.permission === "default") {
-          console.log("Standalone mode detected, auto-requesting notification permission...");
+        // Check if this is the first visit (no preference set yet)
+        const hasPromptedBefore = localStorage.getItem(
+          "inr-notification-prompt-shown",
+        );
+        const permissionDefault = Notification.permission === "default";
+
+        // Only auto-prompt on first visit when permission is still default
+        if (!hasPromptedBefore && permissionDefault) {
+          console.log(
+            "First visit detected, requesting notification permission...",
+          );
+          localStorage.setItem("inr-notification-prompt-shown", "true");
+
           Notification.requestPermission().then((permission) => {
             console.log("Notification permission result:", permission);
             if (permission === "granted") {
               saveNotificationPreferences(true);
               updateNotificationStatus();
+            } else {
+              saveNotificationPreferences(false);
             }
           });
         }
